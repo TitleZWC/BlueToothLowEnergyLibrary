@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BlueToothLowEnergyLibrary</string>
+    <string name="action_settings">Settings</string>
+    <string name="error_bluetooth_not_supported">不支持蓝牙v4</string>
+</resources>
