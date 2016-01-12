@@ -417,11 +417,13 @@ public class BluetoothUtils {
 
         void onDisonnectStarted();
     }
-}
 
-class BluetoothNotSupportException extends Exception {
-    public BluetoothNotSupportException(String detailMessage) {
-        super(detailMessage);
+    public class BluetoothNotSupportException extends Exception {
+        public BluetoothNotSupportException(String detailMessage) {
+            super(detailMessage);
+        }
     }
 }
+
+
 
