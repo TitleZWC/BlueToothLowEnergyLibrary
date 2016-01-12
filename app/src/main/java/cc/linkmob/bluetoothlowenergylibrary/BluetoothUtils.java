@@ -398,6 +398,25 @@ public class BluetoothUtils {
 
 
     private OnBluetoothUtilStatusChangeLinsener onBluetoothUtilStatusChangeLinsener;
+
+    public interface OnBluetoothUtilStatusChangeLinsener {
+
+        void onFindDevice(BluetoothDevice device);
+
+        void onLeServiceInitFailed();
+
+        void onConnectStart();
+
+        void onDisonnectStart();
+
+        void onFindGattServices(List<BluetoothGattService> supportedGattServices);
+
+        void onFindData(String uuid,String data);
+
+        void onConnectStarted();
+
+        void onDisonnectStarted();
+    }
 }
 
 class BluetoothNotSupportException extends Exception {
@@ -406,21 +425,3 @@ class BluetoothNotSupportException extends Exception {
     }
 }
 
-interface OnBluetoothUtilStatusChangeLinsener {
-
-    void onFindDevice(BluetoothDevice device);
-
-    void onLeServiceInitFailed();
-
-    void onConnectStart();
-
-    void onDisonnectStart();
-
-    void onFindGattServices(List<BluetoothGattService> supportedGattServices);
-
-    void onFindData(String uuid,String data);
-
-    void onConnectStarted();
-
-    void onDisonnectStarted();
-}
