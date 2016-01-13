@@ -207,29 +207,28 @@ public class BluetoothUtils {
 
 
     // Code to manage Service lifecycle.
-    private  ServiceConnection mServiceConnection ;
-//    = new ServiceConnection() {
-//
-//        @Override
-//        public void onServiceConnected(ComponentName componentName, IBinder service) {
-//            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-//            if (!mBluetoothLeService.initialize()) {
-//                Log.e(TAG, "Unable to initialize Bluetooth");
-////                finish();
-//                // 连接Server初始化失败时的回调
-//                if (onBluetoothUtilStatusChangeLinsener != null) {
-//                    onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
-//                }
-//            }
-//            // Automatically connects to the device upon successful start-up initialization.
-//            mBluetoothLeService.connect(mDeviceAddress);
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName componentName) {
-//            mBluetoothLeService = null;
-//        }
-//    };
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+            if (!mBluetoothLeService.initialize()) {
+                Log.e(TAG, "Unable to initialize Bluetooth");
+//                finish();
+                // 连接Server初始化失败时的回调
+                if (onBluetoothUtilStatusChangeLinsener != null) {
+                    onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
+                }
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            mBluetoothLeService.connect(mDeviceAddress);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBluetoothLeService = null;
+        }
+    };
 
 
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
@@ -366,28 +365,12 @@ public class BluetoothUtils {
         // 连接时停止扫描
         mScanning = false;
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        mServiceConnection = new ServiceConnection() {
+        if(mBluetoothLeService!=null){
+            mBluetoothLeService.unbindService(mServiceConnection);
+        }
+        Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
+        context.bindService(gattServiceIntent, mServiceConnection, context.BIND_AUTO_CREATE);
 
-            @Override
-            public void onServiceConnected(ComponentName componentName, IBinder service) {
-                mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-                if (!mBluetoothLeService.initialize()) {
-                    Log.e(TAG, "Unable to initialize Bluetooth");
-//                finish();
-                    // 连接Server初始化失败时的回调
-                    if (onBluetoothUtilStatusChangeLinsener != null) {
-                        onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
-                    }
-                }
-                // Automatically connects to the device upon successful start-up initialization.
-                mBluetoothLeService.connect(mDeviceAddress);
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName componentName) {
-                mBluetoothLeService = null;
-            }
-        };
         context.registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
         if (mBluetoothLeService != null) {
             //开始连接回调，用于修改页面进度条为转动状态
@@ -396,7 +379,7 @@ public class BluetoothUtils {
             }
             final boolean result = mBluetoothLeService.connect(deviceAddress);
             Log.d(TAG, "Connect request result=" + result);
-        }else{
+        } else {
             Log.e(TAG, "BluetoothLeService is null");
         }
     }
