@@ -45,15 +45,15 @@ public class BluetoothLeService extends Service {
     private static final int STATE_CONNECTED = 2;
 
     public final static String ACTION_GATT_CONNECTED =
-            "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
+            "cc.linkmob.bluetoothlowenergylibrary.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
-            "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
+            "cc.linkmob.bluetoothlowenergylibrary.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED =
-            "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
+            "cc.linkmob.bluetoothlowenergylibrary.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
-            "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+            "cc.linkmob.bluetoothlowenergylibrary.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
-            "com.example.bluetooth.le.EXTRA_DATA";
+            "cc.linkmob.bluetoothlowenergylibrary.EXTRA_DATA";
 
 //    public final static UUID UUID_HEART_RATE_MEASUREMENT =
 //            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);

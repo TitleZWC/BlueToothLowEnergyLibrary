@@ -207,28 +207,29 @@ public class BluetoothUtils {
 
 
     // Code to manage Service lifecycle.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-//                finish();
-                // 连接Server初始化失败时的回调
-                if (onBluetoothUtilStatusChangeLinsener != null) {
-                    onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
-                }
-            }
-            // Automatically connects to the device upon successful start-up initialization.
-            mBluetoothLeService.connect(mDeviceAddress);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
+    private  ServiceConnection mServiceConnection ;
+//    = new ServiceConnection() {
+//
+//        @Override
+//        public void onServiceConnected(ComponentName componentName, IBinder service) {
+//            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+//            if (!mBluetoothLeService.initialize()) {
+//                Log.e(TAG, "Unable to initialize Bluetooth");
+////                finish();
+//                // 连接Server初始化失败时的回调
+//                if (onBluetoothUtilStatusChangeLinsener != null) {
+//                    onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
+//                }
+//            }
+//            // Automatically connects to the device upon successful start-up initialization.
+//            mBluetoothLeService.connect(mDeviceAddress);
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName componentName) {
+//            mBluetoothLeService = null;
+//        }
+//    };
 
 
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
@@ -365,7 +366,28 @@ public class BluetoothUtils {
         // 连接时停止扫描
         mScanning = false;
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
+        mServiceConnection = new ServiceConnection() {
 
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder service) {
+                mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+                if (!mBluetoothLeService.initialize()) {
+                    Log.e(TAG, "Unable to initialize Bluetooth");
+//                finish();
+                    // 连接Server初始化失败时的回调
+                    if (onBluetoothUtilStatusChangeLinsener != null) {
+                        onBluetoothUtilStatusChangeLinsener.onLeServiceInitFailed();
+                    }
+                }
+                // Automatically connects to the device upon successful start-up initialization.
+                mBluetoothLeService.connect(mDeviceAddress);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                mBluetoothLeService = null;
+            }
+        };
         context.registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
         if (mBluetoothLeService != null) {
             //开始连接回调，用于修改页面进度条为转动状态
@@ -374,6 +396,8 @@ public class BluetoothUtils {
             }
             final boolean result = mBluetoothLeService.connect(deviceAddress);
             Log.d(TAG, "Connect request result=" + result);
+        }else{
+            Log.e(TAG, "BluetoothLeService is null");
         }
     }
 
@@ -383,7 +407,7 @@ public class BluetoothUtils {
     public void disconnectionDevice() {
         // 开始断开连接回调，用于修改页面进度条为转动状态
         if (onBluetoothUtilStatusChangeLinsener != null) {
-            onBluetoothUtilStatusChangeLinsener.onDisonnectStart();
+            onBluetoothUtilStatusChangeLinsener.onDisconnectStart();
         }
         mBluetoothLeService.disconnect();
     }
@@ -476,7 +500,7 @@ public class BluetoothUtils {
         /**
          * 当用户选择断开连接时回调
          */
-        void onDisonnectStart();
+        void onDisconnectStart();
 
         /**
          * 搜索到ble上的service时回调
