@@ -119,7 +119,7 @@ public class BluetoothUtils {
      * @return true表示已经打开
      */
     public boolean isBleEnable() {
-        return !mBluetoothAdapter.isEnabled();
+        return mBluetoothAdapter.isEnabled();
     }
 
 
