@@ -309,7 +309,7 @@ public class BluetoothUtils {
                     if(mServiceUUID!=null){
                         BluetoothGattService gattService = mBluetoothLeService.getSupportedGattService(mServiceUUID);
                         onBluetoothUtilStatusChangeLinsener.onFindGattService(gattService);
-                        if(mCharacteristicsUUID!=null){
+                        if(mCharacteristicsUUID!=null&&gattService!=null){
 
                             BluetoothGattCharacteristic BluetoothGattCharacteristic =  gattService.getCharacteristic(mCharacteristicsUUID);
                             if(BluetoothGattCharacteristic!=null){
@@ -318,6 +318,9 @@ public class BluetoothUtils {
                             }else{
                                 Log.e(TAG,"BluetoothGattCharacteristic为null");
                             }
+                        }
+                        if(gattService==null){
+                            Log.e(TAG,"BluetoothGattService为null");
                         }
 
                     }
