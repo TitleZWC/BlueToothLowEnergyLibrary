@@ -19,6 +19,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by WenChao on 2016/1/11.
@@ -42,7 +43,7 @@ public class BluetoothUtils {
     private boolean isSupportBlueToothLowEnergy;
     private static BluetoothUtils instance;
 
-    public static BluetoothUtils getInstance(Context context) {
+    public static BluetoothUtils getInstance(Context context) throws BluetoothNotSupportException {
         if (instance == null) {
             synchronized (BluetoothUtils.class) {
                 if (instance == null) {
@@ -50,7 +51,16 @@ public class BluetoothUtils {
                 }
             }
         }
-        return instance;
+        if(instance.isSupportBLE(context)){
+
+            if (!instance.isBleEnable()) {
+                instance.turnOnBlueTooth((Activity) context);
+            }
+            return instance;
+        }else{
+            return null;
+        }
+
     }
 
     private BluetoothUtils(Context context) {
@@ -87,13 +97,14 @@ public class BluetoothUtils {
      * @param enable true 表示开始搜索，false表示停止搜索
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void scanLeDevice(Activity context, final boolean enable) throws BluetoothNotSupportException {
-        if (!isSupportBlueToothLowEnergy) {
-            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
-        }
-        if (!isBleEnable()) {
-            turnOnBlueTooth(context);
-        }
+    public void scanLeDevice(Activity context, final boolean enable) {
+//            throws BluetoothNotSupportException {
+//        if (!isSupportBlueToothLowEnergy) {
+//            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
+//        }
+//        if (!isBleEnable()) {
+//            turnOnBlueTooth(context);
+//        }
         mContext = context;
         if (enable) {
             // Stops scanning after a pre-defined scan period.
@@ -114,6 +125,39 @@ public class BluetoothUtils {
     }
 
     /**
+     * 搜索ble设备
+     *
+     * @param enable true 表示开始搜索，false表示停止搜索
+     */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void scanLeDevice(Activity context, UUID[] uuids, final boolean enable) {
+//            throws BluetoothNotSupportException {
+//        if (!isSupportBlueToothLowEnergy) {
+//            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
+//        }
+        if (!isBleEnable()) {
+            turnOnBlueTooth(context);
+        }
+        mContext = context;
+        if (enable) {
+            // Stops scanning after a pre-defined scan period.
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mScanning = false;
+                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                }
+            }, SCAN_PERIOD);
+
+            mScanning = true;
+            mBluetoothAdapter.startLeScan(uuids, mLeScanCallback);
+        } else {
+            mScanning = false;
+            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+        }
+    }
+
+    /**
      * 蓝牙是否打开
      *
      * @return true表示已经打开
@@ -126,31 +170,33 @@ public class BluetoothUtils {
     /**
      * 打开蓝牙
      */
-    public void turnOnBlueTooth(Activity context) throws BluetoothNotSupportException {
-        if (!isSupportBlueToothLowEnergy) {
-            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
-        } else {
+    public void turnOnBlueTooth(Activity context){
+//            throws BluetoothNotSupportException {
+//        if (!isSupportBlueToothLowEnergy) {
+//            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
+//        } else {
 
-            // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-            // fire an intent to display a dialog asking the user to grant permission to enable it.
-            if (!isBleEnable()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                context.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
+        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!isBleEnable()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            context.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+//        }
     }
 
     /**
      * 关闭蓝牙
      */
-    public void turnOffBlueTooth() throws BluetoothNotSupportException {
-        if (!isSupportBlueToothLowEnergy) {
-            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
-        } else {
-            if (mBluetoothAdapter.isEnabled()) {
-                mBluetoothAdapter.disable();
-            }
+    public void turnOffBlueTooth() {
+//            throws BluetoothNotSupportException {
+//        if (!isSupportBlueToothLowEnergy) {
+//            throw new BluetoothNotSupportException("该设备不支持蓝牙V4");
+//        } else {
+        if (mBluetoothAdapter.isEnabled()) {
+            mBluetoothAdapter.disable();
         }
+//        }
     }
 
     /**
@@ -221,6 +267,7 @@ public class BluetoothUtils {
                 }
             }
             // Automatically connects to the device upon successful start-up initialization.
+            Log.d(TAG, "connecting...");
             mBluetoothLeService.connect(mDeviceAddress);
         }
 
@@ -259,6 +306,23 @@ public class BluetoothUtils {
 
                 if (onBluetoothUtilStatusChangeLinsener != null) {
                     onBluetoothUtilStatusChangeLinsener.onFindGattServices(mBluetoothLeService.getSupportedGattServices());
+                    if(mServiceUUID!=null){
+                        BluetoothGattService gattService = mBluetoothLeService.getSupportedGattService(mServiceUUID);
+                        onBluetoothUtilStatusChangeLinsener.onFindGattService(gattService);
+                        if(mCharacteristicsUUID!=null){
+
+                            BluetoothGattCharacteristic BluetoothGattCharacteristic =  gattService.getCharacteristic(mCharacteristicsUUID);
+                            if(BluetoothGattCharacteristic!=null){
+
+                                onBluetoothUtilStatusChangeLinsener.onFindGattCharacteristic(BluetoothGattCharacteristic);
+                            }else{
+                                Log.e(TAG,"BluetoothGattCharacteristic为null");
+                            }
+                        }
+
+                    }
+
+                    //TODO
                 }
 //                displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
@@ -329,7 +393,17 @@ public class BluetoothUtils {
 //        }
 //    }
 
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled        If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+                                              boolean enabled) {
+        mBluetoothLeService.setCharacteristicNotification(characteristic,enabled);
 
+    }
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -355,6 +429,45 @@ public class BluetoothUtils {
     private String mDeviceAddress;
 
     /**
+     * 连接设备时赋值
+     */
+    private UUID mServiceUUID;
+    /**
+     * 连接设备时赋值
+     */
+    private UUID mCharacteristicsUUID;
+
+    /**
+     *
+     */
+    private BluetoothGattService mBluetoothGattService;
+
+    /**
+     * 连接设备
+     *
+     * @param context
+     * @param deviceAddress   要连接的地址
+     * @param serviceUUID     要连接的service的UUID
+     * @param characteristics 要连接的Service中的characteristics的UUID
+     */
+    public void connectDevice(Context context, String deviceAddress, UUID serviceUUID, UUID characteristics) {
+        mCharacteristicsUUID = characteristics;
+        connectDevice(context, deviceAddress, serviceUUID);
+    }
+
+    /**
+     * 连接设备
+     *
+     * @param context
+     * @param deviceAddress 要连接的地址
+     * @param serviceUUID   要连接的service的UUID
+     */
+    public void connectDevice(Context context, String deviceAddress, UUID serviceUUID) {
+        mServiceUUID = serviceUUID;
+        connectDevice(context, deviceAddress);
+    }
+
+    /**
      * 连接设备
      *
      * @param context
@@ -365,12 +478,12 @@ public class BluetoothUtils {
         // 连接时停止扫描
         mScanning = false;
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        if(mBluetoothLeService!=null){
-            mBluetoothLeService.unbindService(mServiceConnection);
-        }
-        Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
-        context.bindService(gattServiceIntent, mServiceConnection, context.BIND_AUTO_CREATE);
+//        if(mBluetoothLeService!=null){
+//            mBluetoothLeService.unbindService(mServiceConnection);
+//        }
 
+
+//        context.unregisterReceiver(mGattUpdateReceiver);
         context.registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
         if (mBluetoothLeService != null) {
             //开始连接回调，用于修改页面进度条为转动状态
@@ -379,9 +492,10 @@ public class BluetoothUtils {
             }
             final boolean result = mBluetoothLeService.connect(deviceAddress);
             Log.d(TAG, "Connect request result=" + result);
-        } else {
-            Log.e(TAG, "BluetoothLeService is null");
         }
+
+        Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
+        context.bindService(gattServiceIntent, mServiceConnection, context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -486,7 +600,7 @@ public class BluetoothUtils {
         void onDisconnectStart();
 
         /**
-         * 搜索到ble上的service时回调
+         * 搜索到ble上的services时回调
          *
          * @param supportedGattServices 搜索到的service集合
          */
@@ -509,6 +623,20 @@ public class BluetoothUtils {
          * 断开后回调
          */
         void onDisconnectStarted();
+
+        /**
+         * 用{@link #connectDevice(Context, String, UUID)}或者{@link #connectDevice(Context, String, UUID, UUID)}搜索到ble上的services时回调
+         *
+         * @param supportedGattService 根据连接时的UUID 搜索到的service
+         */
+        void onFindGattService(BluetoothGattService supportedGattService);
+
+        /**
+         * 用{@link #connectDevice(Context, String, UUID, UUID)}搜索到ble上的characteristic时回调
+         *
+         * @param characteristic 根据连接时的UUID 搜索到的characteristic
+         */
+        void onFindGattCharacteristic(BluetoothGattCharacteristic characteristic);
     }
 
     /**
