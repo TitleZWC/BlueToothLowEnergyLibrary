@@ -297,7 +297,6 @@ public class BluetoothUtils {
                 // 在用户接口上展示所有的services and characteristics
                 //搜索到的service集合
                 if (onBluetoothUtilStatusChangeListener != null) {
-                    //TODO 返回值为Null时的处理
                     List<BluetoothGattService> Services = mBluetoothLeService.getSupportedGattServices();
                     if (Services != null && Services.size() > 0) {
                         onBluetoothUtilStatusChangeListener.onFindGattServices(Services);
@@ -375,7 +374,7 @@ public class BluetoothUtils {
      */
     private UUID mCharacteristicsUUID;
 
-    private BluetoothGattService mBluetoothGattService;
+//    private BluetoothGattService mBluetoothGattService;
 
     /**
      * 连接设备
@@ -450,10 +449,8 @@ public class BluetoothUtils {
 
     /**
      * 断开连接
-     *
-     * @param context 上下文
      */
-    public void disconnecDevice(Context context) {
+    public void disconnecDevice() {
         mBluetoothLeService.disconnect();
 //        onDestroy(context);
     }
@@ -506,14 +503,14 @@ public class BluetoothUtils {
     /**
      * 设置监听器
      *
-     * @param onBluetoothUtilStatusChangeLinsener
+     * @param onBluetoothUtilStatusChangeLinsener 蓝牙状态监听器
      */
     public void setOnBluetoothUtilStatusChangeLinsener(OnBluetoothUtilStatusChangeListener onBluetoothUtilStatusChangeLinsener) {
         this.onBluetoothUtilStatusChangeListener = onBluetoothUtilStatusChangeLinsener;
     }
 
 
-    private OnBluetoothUtilStatusChangeListener onBluetoothUtilStatusChangeListener;
+    public OnBluetoothUtilStatusChangeListener onBluetoothUtilStatusChangeListener;
 
     /**
      * BluetoothUtil状态变化监听器
