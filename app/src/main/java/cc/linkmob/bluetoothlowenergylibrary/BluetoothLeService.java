@@ -1,8 +1,5 @@
 package cc.linkmob.bluetoothlowenergylibrary;
 
-/**
- * Created by WenChao on 2016/1/11.
- */
 
 import android.annotation.TargetApi;
 import android.app.Service;
@@ -18,12 +15,36 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import java.util.List;
 import java.util.UUID;
+/**
+ * The MIT License (MIT)
+ * <p/>
+ * Copyright (c) 2015 LinkMob.cc
+ * <p/>
+ * Contributors: Title
+ * <p/>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * <p/>
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * <p/>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 /**
  * Service for managing connection and data communication with a GATT server hosted on a
@@ -32,17 +53,12 @@ import java.util.UUID;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothLeService extends Service {
     private final static String TAG = BluetoothLeService.class.getSimpleName();
-    public static String EXTRA_UUID ="com.example.bluetooth.le.EXTRA_UUID";
+    public static String EXTRA_UUID = "com.example.bluetooth.le.EXTRA_UUID";
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     public BluetoothGatt mBluetoothGatt;
-    private int mConnectionState = STATE_DISCONNECTED;
-
-    private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
-    private static final int STATE_CONNECTED = 2;
 
     public final static String ACTION_GATT_CONNECTED =
             "cc.linkmob.bluetoothlowenergylibrary.ACTION_GATT_CONNECTED";
@@ -55,24 +71,23 @@ public class BluetoothLeService extends Service {
     public final static String EXTRA_DATA =
             "cc.linkmob.bluetoothlowenergylibrary.EXTRA_DATA";
 
-//    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-//            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         /**
          * 连接状态发生改变
-         * @param gatt
-         * @param status
-         * @param newState
+         * @param gatt GATT client
+         * @param status Status of the connect or disconnect operation.
+         *               {@link BluetoothGatt#GATT_SUCCESS} if the operation succeeds.
+         * @param newState Returns the new connection state. Can be one of
+         *                  {@link BluetoothProfile#STATE_DISCONNECTED} or
+         *                  {@link BluetoothProfile#STATE_CONNECTED}
          */
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) { //蓝牙设备已经连接
                 intentAction = ACTION_GATT_CONNECTED;
-                mConnectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
@@ -81,16 +96,18 @@ public class BluetoothLeService extends Service {
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {//蓝牙设备无法连接
                 intentAction = ACTION_GATT_DISCONNECTED;
-                mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction);
             }
         }
 
         /**
-         * 发现新的Services
-         * @param gatt
-         * @param status
+         * Callback invoked when the list of remote services, characteristics and descriptors
+         * for the remote device have been updated, ie new services have been discovered.
+         *
+         * @param gatt GATT client invoked {@link BluetoothGatt#discoverServices}
+         * @param status {@link BluetoothGatt#GATT_SUCCESS} if the remote device
+         *               has been explored successfully.
          */
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -101,13 +118,14 @@ public class BluetoothLeService extends Service {
             }
         }
 
-
-
         /**
-         *发现Characteristic
-         * @param gatt
-         * @param characteristic
-         * @param status
+         * Callback reporting the result of a characteristic read operation.
+         *
+         * @param gatt GATT client invoked {@link BluetoothGatt#readCharacteristic}
+         * @param characteristic Characteristic that was read from the associated
+         *                       remote device.
+         * @param status {@link BluetoothGatt#GATT_SUCCESS} if the read operation
+         *               was completed successfully.
          */
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
@@ -118,14 +136,20 @@ public class BluetoothLeService extends Service {
             }
         }
 
+        /**
+         * Callback triggered as a result of a remote characteristic notification.
+         *
+         * @param gatt GATT client the characteristic is associated with
+         * @param characteristic Characteristic that has been updated as a result
+         *                       of a remote notification event.
+         */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-
         }
     };
-    Handler handler;
+
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
@@ -139,40 +163,15 @@ public class BluetoothLeService extends Service {
         // carried out as per profile specifications:
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
 
-//        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-//            int flag = characteristic.getProperties();
-//            int format = -1;
-//            if ((flag & 0x01) != 0) {
-//                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-//                Log.d(TAG, "Heart rate format UINT16.");
-//            } else {
-//                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-//                Log.d(TAG, "Heart rate format UINT8.");
-//            }
-//            final int heartRate = characteristic.getIntValue(format, 1);
-//            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-//            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-//        } else {
-
         // For all other profiles, writes the data formatted in HEX.
         final byte[] data = characteristic.getValue();
         if (data != null && data.length > 0) {
             final StringBuilder stringBuilder = new StringBuilder(data.length);
-            for(byte byteChar : data)
+            for (byte byteChar : data)
                 stringBuilder.append(String.format("%02X ", byteChar));
-            intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+            intent.putExtra(EXTRA_DATA, new String(data) );//+ "\n" + stringBuilder.toString());
         }
-//        }
-
-
-//        byte[] arrayOfByte =   characteristic.getValue();
-//        if ((arrayOfByte != null) && (arrayOfByte.length > 0))
-//        {
-//            Looper.prepare();
-//            Toast.makeText(this,new String(arrayOfByte),Toast.LENGTH_SHORT).show();
-//        }
-//        intent.putExtra("data",new String(arrayOfByte));
-        intent.putExtra(EXTRA_UUID,characteristic.getUuid().toString());
+        intent.putExtra(EXTRA_UUID, characteristic.getUuid().toString());
         sendBroadcast(intent);
     }
 
@@ -189,9 +188,6 @@ public class BluetoothLeService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        // After using a given device, you should make sure that BluetoothGatt.close() is called
-        // such that resources are cleaned up properly.  In this particular example, close() is
-        // invoked when the UI is disconnected from the Service.
         close();
         return super.onUnbind(intent);
     }
@@ -243,12 +239,7 @@ public class BluetoothLeService extends Service {
         if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress)
                 && mBluetoothGatt != null) {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
-            if (mBluetoothGatt.connect()) {
-                mConnectionState = STATE_CONNECTING;
-                return true;
-            } else {
-                return false;
-            }
+            return mBluetoothGatt.connect();
         }
 
         final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
@@ -256,12 +247,9 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "Device not found.  Unable to connect.");
             return false;
         }
-        // We want to directly connect to the device, so we are setting the autoConnect
-        // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
-        mConnectionState = STATE_CONNECTING;
         return true;
     }
 
@@ -291,20 +279,7 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt = null;
     }
 
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
-     *
-     * @param characteristic The characteristic to read from.
-     */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.readCharacteristic(characteristic);
-    }
+
 
     /**
      * Enables or disables notification on a give characteristic.
@@ -319,14 +294,6 @@ public class BluetoothLeService extends Service {
             return;
         }
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-
-        // This is specific to Heart Rate Measurement.
-//        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-//            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-//                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-//            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//            mBluetoothGatt.writeDescriptor(descriptor);
-//        }
     }
 
     /**
