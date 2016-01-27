@@ -3,7 +3,21 @@ a library to ble
 
 一、添加依赖
 
- compile 'com.github.TitleZWC:BlueToothLowEnergyLibrary:v0.1-alpha'
+Step 1. Add the JitPack repository to your build file
+Add it in your root build.gradle at the end of repositories:
+
+allprojects {
+		repositories {
+			...
+			maven { url "https://jitpack.io" }
+		}
+	}
+
+Step 2. Add the dependency:
+
+	dependencies {
+	        compile 'com.github.TitleZWC:BlueToothLowEnergyLibrary:v0.1-alpha'
+	}
  
 二、声明并初始化BluetoothUtils。
  private BluetoothUtils mBluetoothUtil;
