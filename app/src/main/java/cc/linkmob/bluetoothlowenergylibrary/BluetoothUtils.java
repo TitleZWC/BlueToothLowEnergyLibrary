@@ -298,7 +298,6 @@ public class BluetoothUtils {
                 // 在用户接口上展示所有的services and characteristics
                 //搜索到的service集合
                 if (onBluetoothUtilStatusChangeListener != null) {
-                    //TODO 返回值为Null时的处理
                     List<BluetoothGattService> Services = mBluetoothLeService.getSupportedGattServices();
                     if (Services != null && Services.size() > 0) {
                         onBluetoothUtilStatusChangeListener.onFindGattServices(Services);
@@ -504,7 +503,7 @@ public class BluetoothUtils {
      */
 
     public boolean sendData(BluetoothGattCharacteristic notifyCharacter, String msg) throws NullPointerException {
-        //TODO 判断链接状态
+        // 判断链接状态
         if(!isConnected){
             Log.e(TAG,"the remote Device doesn't connected!");
             return false;

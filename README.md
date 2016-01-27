@@ -18,12 +18,13 @@ a library to ble
             e.printStackTrace();
         }
 	}
+
 三、设置蓝牙状态监听器
+
         mBluetoothUtil.setOnBluetoothUtilStatusChangeLinsener(new BluetoothUtils.OnBluetoothUtilStatusChangeListener() {
             @Override
             public void onFindDevice(BluetoothDevice device) {
                 Toast.makeText(MainActivity.this,"FindDevice",Toast.LENGTH_SHORT).show();
-
                 mLeDeviceListAdapter.addDevice(device);
                 mLeDeviceListAdapter.notifyDataSetChanged();
             }
@@ -68,6 +69,11 @@ a library to ble
                 mNotifyCharacteristic = characteristic;
                 mBluetoothUtil.setCharacteristicNotification(
                         characteristic, true);
+            }
+
+            @Override
+            public void onSendData(String UUID, String data) {
+                dataValue.append("发送：" + data + "\r\n");
             }
         });
 		
