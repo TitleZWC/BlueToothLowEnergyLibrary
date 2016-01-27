@@ -502,7 +502,7 @@ public class BluetoothUtils {
      * @throws NullPointerException notifyCharacter为空
      */
 
-    public boolean sendData(BluetoothGattCharacteristic notifyCharacter, String msg) throws NullPointerException {
+    public boolean sendData(BluetoothGattCharacteristic notifyCharacter, String msg) throws Exception {
         // 判断链接状态
         if(!isConnected){
             Log.e(TAG,"the remote Device doesn't connected!");
@@ -513,7 +513,7 @@ public class BluetoothUtils {
             notifyCharacter.setValue(msg.getBytes());
             return mBluetoothLeService.mBluetoothGatt.writeCharacteristic(notifyCharacter);
         } else {
-            throw new NullPointerException("the BluetoothGattCharacteristic is null");
+            throw new NullPointerException("the BluetoothGattCharacteristic whose UUID you provided in the mothed‘ connectDevice(Context context, String deviceAddress, UUID serviceUUID)’ is null");
         }
     }
 
