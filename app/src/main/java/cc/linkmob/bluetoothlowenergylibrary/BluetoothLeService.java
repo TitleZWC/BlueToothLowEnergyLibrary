@@ -68,6 +68,8 @@ public class BluetoothLeService extends Service {
             "cc.linkmob.bluetoothlowenergylibrary.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
             "cc.linkmob.bluetoothlowenergylibrary.ACTION_DATA_AVAILABLE";
+    public final static String ACTION_DATA_SEND =
+            "cc.linkmob.bluetoothlowenergylibrary.ACTION_DATA_SEND";
     public final static String EXTRA_DATA =
             "cc.linkmob.bluetoothlowenergylibrary.EXTRA_DATA";
 
@@ -115,6 +117,32 @@ public class BluetoothLeService extends Service {
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
+            }
+        }
+
+        /**
+         * Callback indicating the result of a characteristic write operation.
+         *
+         * <p>If this callback is invoked while a reliable write transaction is
+         * in progress, the value of the characteristic represents the value
+         * reported by the remote device. An application should compare this
+         * value to the desired value to be written. If the values don't match,
+         * the application must abort the reliable write transaction.
+         *
+         * @param gatt GATT client invoked {@link BluetoothGatt#writeCharacteristic}
+         * @param characteristic Characteristic that was written to the associated
+         *                       remote device.
+         * @param status The result of the write operation
+         *               {@link BluetoothGatt#GATT_SUCCESS} if the operation succeeds.
+         */
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_DATA_SEND,characteristic);
+            } else {
+                Log.w(TAG, "onCharacteristicWrite received: " + status);
             }
         }
 

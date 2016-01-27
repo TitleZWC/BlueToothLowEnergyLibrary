@@ -271,6 +271,7 @@ public class BluetoothUtils {
         public void onServiceDisconnected(ComponentName componentName) {
             mBluetoothLeService = null;
         }
+
     };
 
 
@@ -297,6 +298,7 @@ public class BluetoothUtils {
                 // 在用户接口上展示所有的services and characteristics
                 //搜索到的service集合
                 if (onBluetoothUtilStatusChangeListener != null) {
+                    //TODO 返回值为Null时的处理
                     List<BluetoothGattService> Services = mBluetoothLeService.getSupportedGattServices();
                     if (Services != null && Services.size() > 0) {
                         onBluetoothUtilStatusChangeListener.onFindGattServices(Services);
@@ -324,6 +326,11 @@ public class BluetoothUtils {
                 if (onBluetoothUtilStatusChangeListener != null) {
                     onBluetoothUtilStatusChangeListener.onFindData(intent.getStringExtra(BluetoothLeService.EXTRA_UUID), intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 }
+            }else if (BluetoothLeService.ACTION_DATA_SEND.equals(action)){
+                //成功发送数据
+                if (onBluetoothUtilStatusChangeListener != null) {
+                    onBluetoothUtilStatusChangeListener.onSendData(intent.getStringExtra(BluetoothLeService.EXTRA_UUID), intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                }
             }
         }
     };
@@ -347,6 +354,7 @@ public class BluetoothUtils {
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_SEND);
         return intentFilter;
     }
 
@@ -441,10 +449,15 @@ public class BluetoothUtils {
             Log.d(TAG, "Connect request result=" + result);
         }
         Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
-        if (!isBindService) {
-            context.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
-            isBindService = true;
+        if (isBindService) {
+
+//        }else{
+            context.unbindService(mServiceConnection);
+//            context.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+//            isBindService = true;
         }
+        context.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+        isBindService = true;
     }
 
     /**
@@ -491,6 +504,11 @@ public class BluetoothUtils {
      */
 
     public boolean sendData(BluetoothGattCharacteristic notifyCharacter, String msg) throws NullPointerException {
+        //TODO 判断链接状态
+        if(!isConnected){
+            Log.e(TAG,"the remote Device doesn't connected!");
+            return false;
+        }
         if (notifyCharacter != null) {
 
             notifyCharacter.setValue(msg.getBytes());
@@ -510,7 +528,7 @@ public class BluetoothUtils {
     }
 
 
-    public OnBluetoothUtilStatusChangeListener onBluetoothUtilStatusChangeListener;
+    private OnBluetoothUtilStatusChangeListener onBluetoothUtilStatusChangeListener;
 
     /**
      * BluetoothUtil状态变化监听器
@@ -567,6 +585,13 @@ public class BluetoothUtils {
          * @param characteristic 根据连接时的UUID 搜索到的characteristic
          */
         void onFindGattCharacteristic(BluetoothGattCharacteristic characteristic);
+
+        /**
+         * 发送数据成功时回调
+         * @param UUID 发送数据characteristic的UUID
+         * @param data 发送的内容
+         */
+        void onSendData(String UUID, String data);
     }
 
 //    /**
